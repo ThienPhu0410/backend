@@ -7,7 +7,6 @@ import Product from "../models/productModel.js";
 const getProducts = asyncHandler(async (req, res) => {
   const pageSize = process.env.PAGINATION_LIMIT;
   const page = Number(req.query.pageNumber) || 1;
-
   const keyword = req.query.keyword
     ? {
         name: {
@@ -16,9 +15,41 @@ const getProducts = asyncHandler(async (req, res) => {
         },
       }
     : {};
+  const brand = req.query.brand ? { brand: req.query.brand } : {};
+  const category = req.query.category ? { category: req.query.category } : {};
 
-  const count = await Product.countDocuments({ ...keyword });
-  const products = await Product.find({ ...keyword })
+  const count = await Product.countDocuments({ ...keyword, ...brand, ...category });
+  const products = await Product.find({ ...keyword, ...brand, ...category })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+  res.json({ products, page, pages: Math.ceil(count / pageSize) });
+});
+
+// @desc    Fetch products by brand
+// @route   GET /api/products/brand/:brand
+// @access  Public
+const getProductsByBrand = asyncHandler(async (req, res) => {
+  const pageSize = process.env.PAGINATION_LIMIT;
+  const page = Number(req.query.pageNumber) || 1;
+  const brand = req.params.brand;
+
+  const count = await Product.countDocuments({ brand: brand });
+  const products = await Product.find({ brand: brand })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+  res.json({ products, page, pages: Math.ceil(count / pageSize) });
+});
+
+// @desc    Fetch products by category
+// @route   GET /api/products/category/:category
+// @access  Public
+const getProductsByCategory = asyncHandler(async (req, res) => {
+  const pageSize = process.env.PAGINATION_LIMIT;
+  const page = Number(req.query.pageNumber) || 1;
+  const category = req.params.category;
+
+  const count = await Product.countDocuments({ category: category });
+  const products = await Product.find({ category: category })
     .limit(pageSize)
     .skip(pageSize * (page - 1));
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
@@ -52,6 +83,7 @@ const createProduct = asyncHandler(async (req, res) => {
     countInStock: 0,
     numReviews: 0,
     description: "Sample description",
+    specs: {},
   });
 
   const createdProduct = await product.save();
@@ -62,7 +94,7 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock } =
+  const { name, price, description, image, brand, category, countInStock, specs } =
     req.body;
 
   const product = await Product.findById(req.params.id);
@@ -74,6 +106,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.brand = brand;
     product.category = category;
     product.countInStock = countInStock;
+    product.specs = specs;
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
@@ -155,4 +188,6 @@ export {
   deleteProduct,
   createProductReview,
   getTopProducts,
+  getProductsByBrand,
+  getProductsByCategory,
 };

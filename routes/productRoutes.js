@@ -8,6 +8,8 @@ import {
   deleteProduct,
   createProductReview,
   getTopProducts,
+  getProductsByBrand,
+  getProductsByCategory, // Thêm tuyến đường mới ở đây
 } from '../controllers/productController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import checkObjectId from '../middleware/checkObjectId.js';
@@ -15,6 +17,8 @@ import checkObjectId from '../middleware/checkObjectId.js';
 router.route('/').get(getProducts).post(protect, admin, createProduct);
 router.route('/:id/reviews').post(protect, checkObjectId, createProductReview);
 router.get('/top', getTopProducts);
+router.get('/brand/:brand', getProductsByBrand);
+router.get('/category/:category', getProductsByCategory); 
 router
   .route('/:id')
   .get(checkObjectId, getProductById)
